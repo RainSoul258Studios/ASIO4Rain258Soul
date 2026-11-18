@@ -1,0 +1,67 @@
+﻿name: Build & Package ASIO4Rain258Soul (Win11 x64)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build_and_package:
+    name: MSVC 2022 + WDK 11 + Inno Setup
+    runs-on: windows-latest
+
+    steps:
+      - name: 1. Clonar repositorio ASIO4Rain258Soul
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar entorno MSVC C++ (x64)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: 3. Cachear e instalar librerias C++ con vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 'b1b19307e2d2ec1eefbdb7ea069de7d4bcd31f01'
+          vcpkgArguments: 'nlohmann-json:x64-windows ixwebsocket:x64-windows'
+
+      - name: 4. Verificar web/index.html
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "web/index.html")) {
+            New-Item -ItemType Directory -Force -Path "web" | Out-Null
+            Set-Content -Path "web/index.html" -Value "<!DOCTYPE html><html><head><meta charset='utf-8'><title>ASIO4Rain258Soul</title></head><body><h1>ASIO4Rain258Soul Console</h1></body></html>"
+          }
+
+      - name: 5. Compilar C++ (APO DLL + WebSocket Bridge) con CMake
+        shell: pwsh
+        run: |
+          cmake -B build -S . -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake --build build --config Release --parallel
+
+      - name: 6. Firmar binarios con certificado de prueba
+        shell: pwsh
+        run: |
+          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=ASIO4Rain258Soul Audio Driver" -CertStoreLocation "Cert:\CurrentUser\My"
+          Set-AuthenticodeSignature -FilePath "build/Release/ASIO4Rain258SoulAPO.dll" -Certificate $cert
+          Set-AuthenticodeSignature -FilePath "build/Release/ASIO4Rain258SoulBridge.exe" -Certificate $cert
+
+      - name: 7. Compilar instalador .exe con Inno Setup 6
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup --yes --no-progress }
+          & $iscc "ASIO4Rain258Soul_Setup.iss"
+
+      - name: 8. Subir artefactos compilados
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASIO4Rain258Soul_Win11_x64_Package
+          path: |
+            installer_out/*.exe
+            build/Release/ASIO4Rain258SoulAPO.dll
+            build/Release/ASIO4Rain258SoulBridge.exe
+            driver/ASIO4Rain258Soul.inf
