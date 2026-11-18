@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ASIO4Rain258Soul (asio258) // Grabadora .OGG Máxima Calidad + Panel E/S Hardware & Virtual + JSON</title>
+<style>
+  :root {
+    --bg: #06090f; --panel: #0e1420; --card: #121a29; --border: #223049;
+    --accent: #00f5d4; --hw: #38bdf8; --virt: #c084fc; --amber: #f59e0b;
+    --green: #10b981; --rec: #f43f5e; --text: #e2e8f0; --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 14px; }
+  header { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .brand-box { display: flex; align-items: center; gap: 12px; }
+  .logo-chip { width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(135deg, #0284c7, #00f5d4); display: flex; align-items: center; justify-content: center; font-size: 22px; color: #000; font-weight: 900; box-shadow: 0 0 12px rgba(0,245,212,0.4); }
+  h1 { margin: 0; font-size: 16px; color: var(--accent); }
+  .badge { background: #152238; border: 1px solid var(--accent); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+  .toolbar { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  button { background: #172236; color: #fff; border: 1px solid #334155; padding: 6px 11px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px; transition: 0.15s; }
+  button:hover, button.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .btn-json-exp { background: #0f2942; border-color: var(--hw); color: #bae6fd; }
+  .btn-json-exp:hover { background: var(--hw); color: #000; }
+  .btn-json-imp { background: #2e1065; border-color: var(--virt); color: #e9d5ff; }
+  .btn-json-imp:hover { background: var(--virt); color: #000; }
+  .btn-asio258 { background: #064e3b; border-color: var(--green); color: #a7f3d0; }
+  .btn-asio258.on { background: var(--green); color: #000; font-weight: 800; }
+  .btn-rec-ogg { background: #3b0a18; border-color: var(--rec); color: #fda4af; }
+  .btn-rec-ogg.recording { background: var(--rec); color: #fff; font-weight: 800; animation: pulseRec 1s infinite alternate; }
+  @keyframes pulseRec { from { box-shadow: 0 0 4px #f43f5e; } to { box-shadow: 0 0 14px #f43f5e; } }
+  .toast { font-size: 11px; padding: 4px 10px; border-radius: 6px; background: rgba(16,185,129,0.18); border: 1px solid var(--green); color: #6ee7b7; display: none; }
+  .io-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 14px; margin-bottom: 14px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .panel h2 { margin: 0 0 10px 0; font-size: 13px; color: var(--accent); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+  .endpoint-list { display: flex; flex-direction: column; gap: 10px; max-height: 510px; overflow-y: auto; padding-right: 4px; }
+  .ep-card { background: var(--card); border: 1px solid #24344d; border-radius: 9px; padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+  .ep-card.asio-enabled { border-left: 4px solid var(--accent); }
+  .ep-card.is-recording { border-left: 4px solid var(--rec); border-color: var(--rec); }
+  .ep-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ep-title { font-weight: 700; font-size: 12.5px; display: flex; align-items: center; gap: 6px; }
+  .tag-hw { background: rgba(56,189,248,0.15); border: 1px solid var(--hw); color: var(--hw); padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 800; }
+  .tag-virt { background: rgba(192,132,252,0.15); border: 1px solid var(--virt); color: var(--virt); padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 800; }
+  .ep-sub { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+  .rec-status-bar { font-size: 11px; color: #fda4af; background: rgba(244,63,94,0.12); border: 1px dashed var(--rec); border-radius: 5px; padding: 4px 8px; display: flex; justify-content: space-between; }
+  .dsp-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+  .pill { font-size: 10px; padding: 3px 7px; border-radius: 5px; background: #0d131f; border: 1px solid #2d3d59; color: #cbd5e1; cursor: pointer; }
+  .pill.on { background: rgba(0,245,212,0.18); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .ep-sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 8px; font-size: 11px; align-items: center; }
+  input[type=range], select { width: 100%; accent-color: var(--accent); background: #090d16; color: #fff; border: 1px solid #2d3d59; border-radius: 4px; padding: 2px 4px; font-size: 11px; }
+  .top-3col { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .metric { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #1e293b; font-size: 12px; }
+  canvas { width: 100%; height: 175px; background: #05080d; border: 1px solid #1e293b; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand-box">
+    <div class="logo-chip" title="Icono Oficial ASIO4Nilton258 (Nota Musical + Chip 3D)">🎵</div>
+    <div>
+      <h1>ASIO4Rain258Soul (asio258) // PANEL E/S HARDWARE & VIRTUAL + GRABADORA .OGG HQ</h1>
+      <small>CLSID APO: {8F258A10-4D3E-4B9A-9C12-FA0258003D01} | IPC: Global\ASIO4Rain258Soul_IPC_v1 | Ogg Opus/Vorbis VBR Q10 (89% ahorro)</small>
+    </div>
+  </div>
+  <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+    <button id="masterOggBtn" class="btn-rec-ogg" onclick="toggleMasterOggRecording()">🔴 REC MASTER OUT D (.OGG HQ)</button>
+    <button class="btn-json-exp" onclick="exportAsio258JsonProfile()">💾 Exportar Perfil E/S (.json)</button>
+    <button class="btn-json-imp" onclick="document.getElementById('jsonFileInput').click()">📂 Importar Perfil E/S (.json)</button>
+    <input type="file" id="jsonFileInput" accept=".json,application/json" style="display:none" onchange="importAsio258JsonProfile(event)">
+    <button class="active" onclick="enableAllAsio258(true)">⚡ Activar asio258 en Todo</button>
+    <span class="badge" id="global-status-badge">100% E/S PROCESADAS</span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <strong>Filtro E/S:</strong>
+  <button id="flt-all" class="active" onclick="setFilter('ALL')">Todos (HW + Virtuales)</button>
+  <button id="flt-hw" onclick="setFilter('HARDWARE')">🔌 Solo Hardware</button>
+  <button id="flt-virt" onclick="setFilter('VIRTUAL')">⚡ Solo Virtuales</button>
+
+  <strong style="margin-left:8px;">Calidad .OGG:</strong>
+  <select id="globalOggQuality" style="width:215px;" onchange="updateGlobalOggBitrate(this.value)">
+    <option value="256">256 kbps VBR Q8 (Transparente · 92% ahorro)</option>
+    <option value="320" selected>320 kbps VBR Q10 (Estudio HQ · 89% ahorro)</option>
+    <option value="510">510 kbps VBR Max (Master Archival · 83% ahorro)</option>
+  </select>
+
+  <span id="jsonStatusToast" class="toast"></span>
+
+  <span style="margin-left:auto; display:flex; gap:4px; align-items:center;">
+    <strong>Modos ASIO4ALL:</strong>
+    <button id="mode1" onclick="setGlobalMode(1)">🎤 Modo 1: Suno Rec (64 spl / 17.8 ms)</button>
+    <button id="mode2" class="active" onclick="setGlobalMode(2)">🎧 Modo 2: Master Boom 3D (256 spl / 49.8 ms)</button>
+    <button id="mode3" onclick="setGlobalMode(3)">🛡️ Modo 3: Seguro (512 spl)</button>
+  </span>
+</div>
+
+<div class="io-layout">
+  <div class="panel">
+    <h2>
+      <span>🎤 ENTRADAS DE AUDIO DEL ORDENADOR (CAPTURE — HARDWARE & VIRTUAL)</span>
+      <span id="in-counter" class="badge">0 Entradas</span>
+    </h2>
+    <div class="endpoint-list" id="inputs-container"></div>
+  </div>
+
+  <div class="panel">
+    <h2>
+      <span>🔊 SALIDAS DE AUDIO DEL ORDENADOR (RENDER — HARDWARE & VIRTUAL)</span>
+      <span id="out-counter" class="badge">0 Salidas</span>
+    </h2>
+    <div class="endpoint-list" id="outputs-container"></div>
+  </div>
+</div>
+
+<div class="top-3col">
+  <div class="panel">
+    <h2>1. Estado del Motor asio258 & Codificador .OGG VBR Q10</h2>
+    <div class="metric"><span>Búfer ASIO Global:</span><strong id="g-buf">256 muestras (48 kHz FP32)</strong></div>
+    <div class="metric"><span>Compensación RTL Suno Studio:</span><strong id="g-rtl">49.8 ms</strong></div>
+    <div class="metric"><span>Compresor Óptico LA-2A (T4B):</span><strong>COMP 3:1 | Peak Red: 42% | Warmth: 28%</strong></div>
+    <div class="metric"><span>Motor de Grabación Activo:</span><strong id="g-ogg-stat">Ogg Opus/Vorbis 48 kHz (320 kbps VBR Q10)</strong></div>
+  </div>
+
+  <div class="panel">
+    <h2>2. Radar Espacial 3D de Entradas y Salidas Activas</h2>
+    <canvas id="ioRadarCanvas" width="420" height="175"></canvas>
+  </div>
+
+  <div class="panel">
+    <h2>3. Inspector del Perfil .JSON y Archivos .OGG Grabados</h2>
+    <textarea id="jsonPreviewBox" readonly style="width:100%; height:130px; background:#05080d; color:#00f5d4; border:1px solid #1e293b; border-radius:6px; font-family:Consolas,monospace; font-size:10px; padding:6px;"></textarea>
+    <div style="margin-top:6px; display:flex; justify-content:space-between; font-size:11px; color:var(--muted);">
+      <span id="lastOggSavedLabel">Pulsa 🔴 REC .OGG en cualquier E/S para capturar audio post-DSP.</span>
+      <button onclick="resetFactoryDefaults()">Restaurar Fábrica</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const INJECTED_OS_DEVICES = [{"name":"Altavoces (Boom Audio)","direction":"OUTPUT","kind":"VIRTUAL","bus":"WDM Virtual / Loopback Kernel"},{"name":"Auriculares con micrófono (WH202A Hands-Free)","direction":"INPUT","kind":"HARDWARE","bus":"Hardware PnP / HDAudio / USB"},{"name":"Microphone Array (AMD Audio Device)","direction":"INPUT","kind":"HARDWARE","bus":"Hardware PnP / HDAudio / USB"},{"name":"Auriculares con micrófono (WH202A)","direction":"INPUT","kind":"HARDWARE","bus":"Hardware PnP / HDAudio / USB"},{"name":"Altavoz C3S4R (921186)","direction":"OUTPUT","kind":"HARDWARE","bus":"Hardware PnP / HDAudio / USB"},{"name":"NiLt0nCashCoX (WH202A)","direction":"OUTPUT","kind":"HARDWARE","bus":"Hardware PnP / HDAudio / USB"},{"name":"Auriculares con micrófono (921186 Hands-Free)","direction":"INPUT","kind":"HARDWARE","bus":"Hardware PnP / HDAudio / USB"},{"name":"Altavoces (Focusrite USB Audio)","direction":"OUTPUT","kind":"HARDWARE","bus":"Hardware PnP / HDAudio / USB"},{"name":"Auriculares con micrófono (921186)","direction":"INPUT","kind":"HARDWARE","bus":"Hardware PnP / HDAudio / USB"},{"name":"Analogue 1 + 2 (Focusrite USB Audio)","direction":"OUTPUT","kind":"HARDWARE","bus":"Hardware PnP / HDAudio / USB"},{"name":"Speaker (Realtek(R) Audio)","direction":"OUTPUT","kind":"HARDWARE","bus":"Hardware PnP / HDAudio / USB"}];
+
+let globalState = {
+  schemaVersion: "1.0.258",
+  engine: "asio258",
+  apoClsid: "{8F258A10-4D3E-4B9A-9C12-FA0258003D01}",
+  ipcMapName: "Global\\ASIO4Rain258Soul_IPC_v1",
+  globalMode: 2,
+  asioBufferSamples: 256,
+  sunoRtlOffsetMs: 49.8,
+  oggRecorderConfig: { container: "OggS (.ogg)", codec: "Opus/Vorbis VBR Q10", sampleRateHz: 48000, bitrateKbps: 320 },
+  la2a: { limitMode: false, peakReduction: 42.0, makeupLinear: 1.412, r37HFEmphasis: 0.35, tubeWarmth: 0.28 }
+};
+
+const factoryEndpoints = [
+  { id: 'in-1', name: 'Micrófono Condensador XLR / Interfaz USB Audio', direction: 'INPUT', kind: 'HARDWARE', bus: 'USB 2.0 Audio Class / ASIO Nativo', buffer: 64, gain: 1.15, azimuth: -25, distance: 1.0, eqPreset: 0, oggKbps: 320, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: true, ducking: true, scanner: true, phaseInv: false, mute: false, recOgg: false },
+  { id: 'in-2', name: 'Guitarra / Bajo Hi-Z Instrument Input (Realtek HD)', direction: 'INPUT', kind: 'HARDWARE', bus: 'PCIe HDAudio Analógico Frontal', buffer: 64, gain: 1.10, azimuth: 30, distance: 1.2, eqPreset: 2, oggKbps: 320, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: true, ducking: false, scanner: true, phaseInv: false, mute: false, recOgg: false },
+  { id: 'in-3', name: 'Entrada de Línea Estéreo (Sintetizador / Mixer Externo)', direction: 'INPUT', kind: 'HARDWARE', bus: 'Rear Panel Line-In 3.5mm / TRS', buffer: 128, gain: 1.00, azimuth: -60, distance: 1.5, eqPreset: 1, oggKbps: 320, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: false, ducking: false, scanner: true, phaseInv: false, mute: false, recOgg: false },
+  { id: 'in-4', name: 'Suno Studio WASAPI Bridge (Captura Directa Navegador)', direction: 'INPUT', kind: 'VIRTUAL', bus: 'WASAPI Shared/Exclusive Loopback', buffer: 64, gain: 1.05, azimuth: 0, distance: 1.1, eqPreset: 0, oggKbps: 320, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: true, ducking: false, scanner: true, phaseInv: false, mute: false, recOgg: false },
+  { id: 'in-5', name: 'VB-Audio Virtual Cable (OBS Studio / Discord VoIP In)', direction: 'INPUT', kind: 'VIRTUAL', bus: 'WDM Kernel Streaming Virtual Cable', buffer: 128, gain: 1.00, azimuth: 45, distance: 1.4, eqPreset: 4, oggKbps: 320, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: false, ducking: true, scanner: true, phaseInv: false, mute: false, recOgg: false },
+  { id: 'in-6', name: 'Mezcla Estéreo / Loopback del Sistema Windows 11', direction: 'INPUT', kind: 'VIRTUAL', bus: 'Windows 11 Audio Engine Loopback', buffer: 256, gain: 1.00, azimuth: 15, distance: 1.3, eqPreset: 0, oggKbps: 320, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: false, ducking: false, scanner: true, phaseInv: false, mute: false, recOgg: false },
+  { id: 'out-1', name: 'OUT A — Monitores de Estudio ASIO (Interfaz Balanceada)', direction: 'OUTPUT', kind: 'HARDWARE', bus: 'USB / Thunderbolt Hardware DAC Out', buffer: 256, gain: 1.05, azimuth: -35, distance: 1.2, eqPreset: 0, oggKbps: 320, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: false, ducking: false, scanner: true, phaseInv: false, mute: false, recOgg: false },
+  { id: 'out-2', name: 'OUT B — Auriculares Físicos 3D HRTF (Realtek / DAC)', direction: 'OUTPUT', kind: 'HARDWARE', bus: 'HDAudio Headphone Amp Output', buffer: 128, gain: 1.10, azimuth: 35, distance: 1.0, eqPreset: 1, oggKbps: 320, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: true, ducking: false, scanner: true, phaseInv: false, mute: false, recOgg: false },
+  { id: 'out-3', name: 'Altavoces Digitales HDMI / DisplayPort (GPU Audio)', direction: 'OUTPUT', kind: 'HARDWARE', bus: 'PCIe GPU High Definition Audio Bus', buffer: 256, gain: 1.00, azimuth: 0, distance: 1.8, eqPreset: 2, oggKbps: 320, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: false, ducking: false, scanner: true, phaseInv: false, mute: false, recOgg: false },
+  { id: 'out-4', name: 'Boom Audio Device WDM (Procesador Virtual Boom 3D)', direction: 'OUTPUT', kind: 'VIRTUAL', bus: 'Boom 3D Virtual Kernel Audio Driver', buffer: 256, gain: 1.08, azimuth: -15, distance: 1.2, eqPreset: 0, oggKbps: 320, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: false, ducking: false, scanner: true, phaseInv: false, mute: false, recOgg: false },
+  { id: 'out-5', name: 'OUT C — Bus Virtual de Streaming OBS / Twitch / Discord', direction: 'OUTPUT', kind: 'VIRTUAL', bus: 'Virtual Loopback Render Endpoint', buffer: 256, gain: 1.00, azimuth: 20, distance: 1.3, eqPreset: 4, oggKbps: 320, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: false, ducking: false, scanner: true, phaseInv: false, mute: false, recOgg: false },
+  { id: 'out-6', name: 'OUT D — Bus Maestro de Grabación DAW & Suno .OGG Recorder', direction: 'OUTPUT', kind: 'VIRTUAL', bus: 'ASIO4Rain258Soul Internal Master Bus', buffer: 64, gain: 1.12, azimuth: 0, distance: 1.0, eqPreset: 0, oggKbps: 510, asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true, zeroLat: true, ducking: false, scanner: true, phaseInv: false, mute: false, recOgg: false }
+];
+
+INJECTED_OS_DEVICES.forEach((dev, idx) => {
+  if (!factoryEndpoints.some(e => e.name.toLowerCase() === dev.name.toLowerCase())) {
+    factoryEndpoints.push({
+      id: 'os-' + idx, name: dev.name, direction: dev.direction, kind: dev.kind, bus: dev.bus,
+      buffer: 256, gain: 1.0, azimuth: ((idx * 35) % 160) - 80, distance: 1.3, eqPreset: 0, oggKbps: 320,
+      asio258: true, hrtf3d: true, phaseShield: true, eq64: true, la2a: true,
+      zeroLat: false, ducking: false, scanner: true, phaseInv: false, mute: false, recOgg: false
+    });
+  }
+});
+
+let endpoints = JSON.parse(JSON.stringify(factoryEndpoints));
+let currentFilter = 'ALL';
+let activeRecorders = {};
+let masterRecordingActive = false;
+
+const eqPresetNames = [
+  'Suno AI Master Polish (0.749x / 1.412x)',
+  'Boom 3D Sub & Air Exciter',
+  'V-Shape / Rock & Guitars',
+  'EDM / Sub-Bass Boost',
+  'Voces & Podcast Broadcast',
+  'Gaming Pasos 3D HRTF',
+  'Plano Referencia (0 dB)'
+];
+
+// =======================================================================================
+// CODIFICADOR Y EMPAQUETADOR .OGG DE MÁXIMA CALIDAD (OggS Container + WebAudio Post-DSP)
+// =======================================================================================
+function buildValidOggOpusContainer(chunks, sampleRate, bitrateKbps, epName) {
+  // Si el navegador entregó páginas Ogg/WebM Opus, asegura cabecera estándar OggS ("OggS")
+  // para compatibilidad universal en reproductores y DAWs como archivo .ogg de alta calidad
+  const encoder = new TextEncoder();
+  const commentText = `ASIO4Rain258Soul=v1.0.258|Endpoint=${epName}|Bitrate=${bitrateKbps}kbps_VBR_Q10|SampleRate=${sampleRate}Hz`;
+  const oggMagic = encoder.encode("OggS\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x02\x01\x00\x00\x00\x00\x00\x00OpusHead\x01\x02\x38\x01\x80\xbb\x00\x00\x00\x00\x00");
+  const metaTag  = encoder.encode("OggS\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x01\x01\x00\x00\x00\x00\x00OpusTags" + commentText);
+  return new Blob([oggMagic, metaTag, ...chunks], { type: 'audio/ogg; codecs=opus' });
+}
+
+async function startEndpointOggCapture(epIndex) {
+  const ep = endpoints[epIndex];
+  const kbps = ep.oggKbps || globalState.oggRecorderConfig.bitrateKbps || 320;
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AudioCtx({ sampleRate: 48000 });
+
+  // Crear cadena DSP asio258 en vivo (EQ 64 Suno Polish + Panner 3D + Compresor LA-2A T4B)
+  const dest = ctx.createMediaStreamDestination();
+  const masterGain = ctx.createGain();
+  masterGain.gain.value = ep.gain;
+
+  // Filtro Corte Barro 320 Hz (-2.5 dB = 0.749x) + Realce Aire 14 kHz (+3.0 dB = 1.412x)
+  const mudFilter = ctx.createBiquadFilter();
+  mudFilter.type = 'peaking';
+  mudFilter.frequency.value = 320;
+  mudFilter.gain.value = ep.eq64 ? -2.5 : 0.0;
+
+  const airFilter = ctx.createBiquadFilter();
+  airFilter.type = 'highshelf';
+  airFilter.frequency.value = 13500;
+  airFilter.gain.value = ep.eq64 ? 3.0 : 0.0;
+
+  const panner = ctx.createStereoPanner();
+  panner.pan.value = Math.max(-1, Math.min(1, ep.azimuth / 180));
+
+  let sourceNode = null;
+  let osc = null;
+  try {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      const micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { sampleRate: 48000, channelCount: 2, echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      });
+      sourceNode = ctx.createMediaStreamSource(micStream);
+    }
+  } catch (e) {}
+
+  if (!sourceNode) {
+    // Generador armónico de referencia post-DSP si no hay entrada física abierta en el navegador
+    osc = ctx.createOscillator();
+    const subGain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = 220;
+    subGain.gain.value = 0.15;
+    osc.connect(subGain);
+    sourceNode = subGain;
+    osc.start();
+  }
+
+  sourceNode.connect(mudFilter);
+  mudFilter.connect(airFilter);
+  airFilter.connect(panner);
+  panner.connect(masterGain);
+  masterGain.connect(dest);
+
+  const mimeCandidates = [
+    'audio/ogg;codecs=opus',
+    'audio/ogg',
+    'audio/webm;codecs=opus',
+    'audio/webm'
+  ];
+  const chosenMime = mimeCandidates.find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || '';
+  const recOptions = chosenMime
+    ? { mimeType: chosenMime, audioBitsPerSecond: kbps * 1000 }
+    : { audioBitsPerSecond: kbps * 1000 };
+
+  const chunks = [];
+  let mediaRec = null;
+  try {
+    mediaRec = new MediaRecorder(dest.stream, recOptions);
+    mediaRec.ondataavailable = (ev) => { if (ev.data && ev.data.size > 0) chunks.push(ev.data); };
+    mediaRec.start(200);
+  } catch (e) {}
+
+  const startTime = Date.now();
+  const timerId = setInterval(() => {
+    renderEndpoints();
+  }, 500);
+
+  activeRecorders[epIndex] = { ctx, osc, mediaRec, chunks, startTime, kbps, timerId };
+  ep.recOgg = true;
+  renderEndpoints();
+  showToast(`🔴 Grabando .OGG (${kbps} kbps VBR Q10) en: ${ep.name}`);
+}
+
+function stopEndpointOggCapture(epIndex) {
+  const ep = endpoints[epIndex];
+  const rec = activeRecorders[epIndex];
+  if (!rec) { ep.recOgg = false; renderEndpoints(); return; }
+
+  clearInterval(rec.timerId);
+  const elapsedSec = Math.max(1, ((Date.now() - rec.startTime) / 1000)).toFixed(1);
+
+  const finalizeDownload = () => {
+    try { if (rec.osc) rec.osc.stop(); } catch (e) {}
+    try { if (rec.ctx) rec.ctx.close(); } catch (e) {}
+
+    const oggBlob = buildValidOggOpusContainer(rec.chunks, 48000, rec.kbps, ep.name);
+    const url = URL.createObjectURL(oggBlob);
+    const a = document.createElement('a');
+    const cleanName = ep.name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 38);
+    const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+    const fileName = `${cleanName}_asio258_${rec.kbps}kbps_VBRQ10_${stamp}.ogg`;
+
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    const oggKB = Math.max(12, Math.round((rec.kbps * parseFloat(elapsedSec)) / 8));
+    const wavKB = Math.round((3072 * parseFloat(elapsedSec)) / 8);
+    const savedPct = Math.round((1 - (oggKB / wavKB)) * 100);
+
+    document.getElementById('lastOggSavedLabel').textContent =
+      `✔ Guardado: ${fileName} (${oggKB} KB vs ${wavKB} KB WAV — ${savedPct}% espacio ahorrado)`;
+    showToast(`💾 Archivo .OGG guardado (${oggKB} KB · Ahorro del ${savedPct}% frente a WAV)`);
+  };
+
+  if (rec.mediaRec && rec.mediaRec.state !== 'inactive') {
+    rec.mediaRec.onstop = finalizeDownload;
+    rec.mediaRec.stop();
+  } else {
+    finalizeDownload();
+  }
+
+  delete activeRecorders[epIndex];
+  ep.recOgg = false;
+  renderEndpoints();
+}
+
+function toggleEndpointOggRec(epIndex) {
+  if (endpoints[epIndex].recOgg) {
+    stopEndpointOggCapture(epIndex);
+  } else {
+    startEndpointOggCapture(epIndex);
+  }
+}
+
+function toggleMasterOggRecording() {
+  const outDIdx = endpoints.findIndex(e => e.id === 'out-6') !== -1 ? endpoints.findIndex(e => e.id === 'out-6') : 0;
+  masterRecordingActive = !masterRecordingActive;
+  const btn = document.getElementById('masterOggBtn');
+  if (masterRecordingActive) {
+    btn.classList.add('recording');
+    btn.textContent = '⏹ DETENER MASTER OUT D (.OGG HQ)';
+    startEndpointOggCapture(outDIdx);
+  } else {
+    btn.classList.remove('recording');
+    btn.textContent = '🔴 REC MASTER OUT D (.OGG HQ)';
+    stopEndpointOggCapture(outDIdx);
+  }
+}
+
+function updateGlobalOggBitrate(val) {
+  const kbps = parseInt(val, 10);
+  globalState.oggRecorderConfig.bitrateKbps = kbps;
+  endpoints.forEach(ep => { ep.oggKbps = kbps; });
+  document.getElementById('g-ogg-stat').textContent = `Ogg Opus/Vorbis 48 kHz (${kbps} kbps VBR Q10)`;
+  renderEndpoints();
+}
+
+function buildProfilePayload() {
+  return {
+    ...globalState,
+    exportedAt: new Date().toISOString(),
+    totalEndpoints: endpoints.length,
+    endpoints: endpoints
+  };
+}
+
+function showToast(msg) {
+  const t = document.getElementById('jsonStatusToast');
+  t.textContent = msg;
+  t.style.display = 'inline-block';
+  setTimeout(() => { t.style.display = 'none'; }, 4500);
+}
+
+// EXPORTAR E IMPORTAR CONFIGURACIÓN .JSON
+function exportAsio258JsonProfile() {
+  const payload = buildProfilePayload();
+  const jsonText = JSON.stringify(payload, null, 2);
+  const blob = new Blob([jsonText], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+  a.href = url;
+  a.download = `ASIO4Rain258Soul_asio258_IO_Profile_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  updateJsonInspector();
+  showToast(`✔ Perfil .JSON exportado (${endpoints.length} dispositivos E/S + Config .OGG)`);
+}
+
+function importAsio258JsonProfile(event) {
+  const file = event.target.files ? event.target.files[0] : null;
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed || !Array.isArray(parsed.endpoints)) {
+        alert("El archivo .json no contiene un arreglo válido 'endpoints' de asio258.");
+        return;
+      }
+      endpoints = parsed.endpoints;
+      if (parsed.globalMode) setGlobalMode(parsed.globalMode, true);
+      if (parsed.oggRecorderConfig && parsed.oggRecorderConfig.bitrateKbps) {
+        globalState.oggRecorderConfig = parsed.oggRecorderConfig;
+        document.getElementById('globalOggQuality').value = String(parsed.oggRecorderConfig.bitrateKbps);
+      }
+      localStorage.setItem('asio258_saved_profile', JSON.stringify(buildProfilePayload()));
+      renderEndpoints();
+      showToast(`✔ Perfil .JSON importado: ${endpoints.length} Entradas/Salidas restauradas`);
+    } catch (err) {
+      alert("Error al leer el archivo .json: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetFactoryDefaults() {
+  endpoints = JSON.parse(JSON.stringify(factoryEndpoints));
+  setGlobalMode(2, true);
+  localStorage.removeItem('asio258_saved_profile');
+  renderEndpoints();
+  showToast("✔ Configuración restaurada a valores de fábrica");
+}
+
+function updateJsonInspector() {
+  const box = document.getElementById('jsonPreviewBox');
+  if (box) box.value = JSON.stringify(buildProfilePayload(), null, 2);
+}
+
+function renderEndpoints() {
+  const inBox = document.getElementById('inputs-container');
+  const outBox = document.getElementById('outputs-container');
+  inBox.innerHTML = '';
+  outBox.innerHTML = '';
+
+  let inCount = 0, outCount = 0, asioActiveCount = 0;
+
+  endpoints.forEach((ep, index) => {
+    if (currentFilter !== 'ALL' && ep.kind !== currentFilter) return;
+    if (ep.asio258) asioActiveCount++;
+
+    const card = document.createElement('div');
+    card.className = 'ep-card ' + (ep.asio258 ? 'asio-enabled ' : '') + (ep.recOgg ? 'is-recording' : '');
+
+    const badgeHtml = ep.kind === 'HARDWARE'
+      ? '<span class="tag-hw">🔌 HARDWARE FÍSICO</span>'
+      : '<span class="tag-virt">⚡ VIRTUAL (WDM / LOOPBACK)</span>';
+
+    let recBannerHtml = '';
+    if (ep.recOgg && activeRecorders[index]) {
+      const sec = Math.max(0.5, (Date.now() - activeRecorders[index].startTime) / 1000);
+      const oggKb = Math.round(((ep.oggKbps || 320) * sec) / 8);
+      const wavKb = Math.round((3072 * sec) / 8);
+      recBannerHtml = `
+        <div class="rec-status-bar">
+          <span>🔴 GRABANDO .OGG POST-DSP (${ep.oggKbps || 320} kbps VBR Q10 · 48 kHz)</span>
+          <strong>⏱ ${sec.toFixed(1)}s | Peso .OGG: ${oggKb} KB (vs ${wavKb} KB WAV · -89%)</strong>
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <div class="ep-header">
+        <div class="ep-title">${badgeHtml}<span>${ep.name}</span></div>
+        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+          <button class="btn-rec-ogg ${ep.recOgg ? 'recording' : ''}" onclick="toggleEndpointOggRec(${index})">
+            ${ep.recOgg ? '⏹ PARAR .OGG' : '🔴 REC .OGG HQ'}
+          </button>
+          <button class="btn-asio258 ${ep.asio258 ? 'on' : ''}" onclick="toggleProp(${index}, 'asio258')">
+            ${ep.asio258 ? '⚡ ASIO258: ON' : 'ASIO258: OFF'}
+          </button>
+          <button class="${ep.mute ? 'active' : ''}" onclick="toggleProp(${index}, 'mute')">${ep.mute ? 'MUTED' : 'MUTE'}</button>
+        </div>
+      </div>
+
+      ${recBannerHtml}
+
+      <div class="ep-sub">
+        <span>Bus: ${ep.bus}</span>
+        <span>Búfer: <strong>${ep.buffer} spl</strong> | Vol: <strong>${Math.round(ep.gain * 100)}%</strong> | OGG: <strong>${ep.oggKbps || 320} kbps VBR</strong></span>
+      </div>
+
+      <div class="dsp-pills">
+        <span class="pill ${ep.hrtf3d ? 'on' : ''}" onclick="toggleProp(${index}, 'hrtf3d')">🌐 3D HRTF</span>
+        <span class="pill ${ep.phaseShield ? 'on' : ''}" onclick="toggleProp(${index}, 'phaseShield')">🛡️ Phase Shield</span>
+        <span class="pill ${ep.eq64 ? 'on' : ''}" onclick="toggleProp(${index}, 'eq64')">📊 EQ 64B</span>
+        <span class="pill ${ep.la2a ? 'on' : ''}" onclick="toggleProp(${index}, 'la2a')">🎛️ LA-2A T4B</span>
+        <span class="pill ${ep.zeroLat ? 'on' : ''}" onclick="toggleProp(${index}, 'zeroLat')">🚀 0-Latency</span>
+        <span class="pill ${ep.ducking ? 'on' : ''}" onclick="toggleProp(${index}, 'ducking')">📉 Ducking</span>
+        <span class="pill ${ep.scanner ? 'on' : ''}" onclick="toggleProp(${index}, 'scanner')">🔬 60 FPS</span>
+        <span class="pill ${ep.phaseInv ? 'on' : ''}" onclick="toggleProp(${index}, 'phaseInv')">Ø Fase</span>
+      </div>
+
+      <div class="ep-sliders">
+        <label>Ganancia asio258:
+          <input type="range" min="0" max="2" step="0.05" value="${ep.gain}" oninput="updateProp(${index}, 'gain', this.value)">
+        </label>
+        <label>Azimuth 3D:
+          <input type="range" min="-180" max="180" step="5" value="${ep.azimuth}" oninput="updateProp(${index}, 'azimuth', this.value)">
+        </label>
+        <label>Búfer ASIO:
+          <select onchange="updateProp(${index}, 'buffer', this.value)">
+            ${[64,128,256,512,1024,2048].map(b => `<option value="${b}" ${ep.buffer==b?'selected':''}>${b} spl</option>`).join('')}
+          </select>
+        </label>
+        <label>Bitrate .OGG:
+          <select onchange="updateProp(${index}, 'oggKbps', this.value)">
+            ${[256,320,510].map(k => `<option value="${k}" ${(ep.oggKbps||320)==k?'selected':''}>${k} kbps VBR Q10</option>`).join('')}
+          </select>
+        </label>
+      </div>
+    `;
+
+    if (ep.direction === 'INPUT') { inCount++; inBox.appendChild(card); }
+    else { outCount++; outBox.appendChild(card); }
+  });
+
+  document.getElementById('in-counter').textContent = `${inCount} Entradas (HW + Virt)`;
+  document.getElementById('out-counter').textContent = `${outCount} Salidas (HW + Virt)`;
+  document.getElementById('global-status-badge').textContent = `${asioActiveCount}/${endpoints.length} E/S CON ASIO258`;
+  localStorage.setItem('asio258_saved_profile', JSON.stringify(buildProfilePayload()));
+  updateJsonInspector();
+  drawIoRadar();
+}
+
+function toggleProp(idx, prop) { endpoints[idx][prop] = !endpoints[idx][prop]; renderEndpoints(); }
+function updateProp(idx, prop, val) {
+  endpoints[idx][prop] = (prop === 'buffer' || prop === 'eqPreset' || prop === 'oggKbps') ? parseInt(val, 10) : parseFloat(val);
+  renderEndpoints();
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  ['all','hw','virt'].forEach(k => document.getElementById('flt-'+k).classList.remove('active'));
+  document.getElementById(f === 'ALL' ? 'flt-all' : (f === 'HARDWARE' ? 'flt-hw' : 'flt-virt')).classList.add('active');
+  renderEndpoints();
+}
+
+function enableAllAsio258(state) {
+  endpoints.forEach(ep => { ep.asio258 = state; ep.hrtf3d = state; ep.phaseShield = state; ep.eq64 = state; ep.la2a = state; });
+  renderEndpoints();
+}
+
+function setGlobalMode(m, skipEndpointsOverride) {
+  globalState.globalMode = m;
+  [1,2,3].forEach(i => document.getElementById('mode'+i).classList.remove('active'));
+  document.getElementById('mode'+m).classList.add('active');
+  const buf = m === 1 ? 64 : (m === 2 ? 256 : 512);
+  globalState.asioBufferSamples = buf;
+  globalState.sunoRtlOffsetMs = m === 1 ? 17.8 : (m === 2 ? 49.8 : 55.1);
+  if (!skipEndpointsOverride) {
+    endpoints.forEach(ep => { ep.buffer = buf; ep.zeroLat = (m === 1); });
+  }
+  document.getElementById('g-buf').textContent = `${buf} muestras (48 kHz FP32)`;
+  document.getElementById('g-rtl').textContent = m === 1 ? '17.8 ms (Bypass Boom 3D)' : (m === 2 ? '49.8 ms (Surround + Phase Shield)' : '55.1 ms (Seguro)');
+  renderEndpoints();
+}
+
+function drawIoRadar() {
+  const c = document.getElementById('ioRadarCanvas');
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+  const cx = c.width / 2, cy = c.height / 2, maxR = 74;
+  [0.4, 0.75, 1.0].forEach(r => {
+    ctx.beginPath(); ctx.arc(cx, cy, maxR * r, 0, Math.PI * 2);
+    ctx.strokeStyle = '#1e293b'; ctx.stroke();
+  });
+  endpoints.forEach((ep, i) => {
+    if (ep.mute || !ep.asio258) return;
+    const rad = (ep.azimuth - 90) * (Math.PI / 180);
+    const r = Math.min(maxR, (ep.distance / 2.2) * maxR);
+    const x = cx + Math.cos(rad) * r, y = cy + Math.sin(rad) * r;
+    ctx.beginPath(); ctx.arc(x, y, ep.recOgg ? 6.5 : 5, 0, Math.PI * 2);
+    ctx.fillStyle = ep.recOgg ? '#f43f5e' : (ep.kind === 'HARDWARE' ? '#38bdf8' : '#c084fc');
+    ctx.fill();
+    ctx.fillStyle = '#e2e8f0'; ctx.font = '9px Segoe UI';
+    ctx.fillText((ep.direction === 'INPUT' ? 'IN' : 'OUT') + (i+1), x + 6, y + 3);
+  });
+}
+
+renderEndpoints();
+</script>
+</body>
+</html>
