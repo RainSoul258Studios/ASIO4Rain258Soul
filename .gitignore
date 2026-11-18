@@ -1,0 +1,13 @@
+build/
+vcpkg/
+*.user
+*.suo
+*.aps
+*.ncb
+*.Log
+*.tlog
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.cat

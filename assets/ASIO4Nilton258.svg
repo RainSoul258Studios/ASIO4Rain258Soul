@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#071124"/>
+      <stop offset="50%" stop-color="#0d254c"/>
+      <stop offset="100%" stop-color="#00b4d8"/>
+    </linearGradient>
+    <linearGradient id="cyanGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f5d4"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+  <rect x="12" y="12" width="232" height="232" rx="44" fill="url(#bgGrad)" stroke="#00f5d4" stroke-width="6"/>
+  <!-- Ondas de audio laterales -->
+  <path d="M 38 96 A 48 48 0 0 0 38 160" fill="none" stroke="#00f5d4" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 24 76 A 76 76 0 0 0 24 180" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" opacity="0.75"/>
+  <path d="M 218 96 A 48 48 0 0 1 218 160" fill="none" stroke="#00f5d4" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 232 76 A 76 76 0 0 1 232 180" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" opacity="0.75"/>
+  <!-- Chip DSP 3D en esquina inferior derecha -->
+  <rect x="148" y="148" width="68" height="68" rx="12" fill="#09152b" stroke="#00f5d4" stroke-width="4"/>
+  <text x="182" y="189" fill="#00f5d4" font-family="Segoe UI, sans-serif" font-weight="800" font-size="24" text-anchor="middle">3D</text>
+  <!-- Nota musical cian central -->
+  <path d="M 104 172 C 104 186 88 196 74 192 C 60 188 56 172 66 160 C 74 150 90 150 96 156 L 96 68 L 168 52 L 168 134 C 168 148 152 158 138 154 C 124 150 120 134 130 122 C 138 112 154 112 160 118 L 160 76 L 104 88 Z" fill="url(#cyanGlow)"/>
+</svg>

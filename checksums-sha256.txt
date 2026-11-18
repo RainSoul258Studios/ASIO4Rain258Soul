@@ -1,0 +1,9 @@
+# =========================================================================================
+# ASIO4Rain258Soul (asio258) v2.0.35 - Official SHA-256 Checksums Manifest (Root v3)
+# Workspace  : D:\ASIO4RainSoul258Studios_v3
+# Repository : https://github.com/RainSoul258Studios/ASIO4Rain258Soul
+# APO CLSID  : {8F258A10-4D3E-4B9A-9C12-FA0258003D01}
+# Generated  : 2026-11-18T15:46:50Z
+# =========================================================================================
+
+a019382f0e34d027133b03f234d5a3db7e43d30c9b9d0a7acfd1135687de08e3  ASIO4Rain258Soul_v2.0.35_Source_And_Installer_Bundle.zip
