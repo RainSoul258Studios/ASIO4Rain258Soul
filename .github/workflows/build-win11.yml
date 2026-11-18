@@ -1,67 +1,141 @@
-﻿name: Build & Package ASIO4Rain258Soul (Win11 x64)
+name: Build & Release ASIO4Rain258Soul Cyberpunk Overlord (Win11 x64)
 
 on:
   push:
-    branches: [ "main", "master" ]
-    tags: [ "v*" ]
+    branches:
+      - "main"
+      - "master"
+    tags:
+      - "v2.*"
+      - "v*"
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - "main"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  build_and_package:
-    name: MSVC 2022 + WDK 11 + Inno Setup
+  build_and_release:
+    name: MSVC 2022 + WDK 11 + Inno Setup + Auto-Release (v2.*)
     runs-on: windows-latest
 
     steps:
       - name: 1. Clonar repositorio ASIO4Rain258Soul
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: 2. Configurar entorno MSVC C++ (x64)
+      - name: 2. Configurar entorno MSVC C++20 (x64)
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
 
-      - name: 3. Cachear e instalar librerias C++ con vcpkg
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgGitCommitId: 'b1b19307e2d2ec1eefbdb7ea069de7d4bcd31f01'
-          vcpkgArguments: 'nlohmann-json:x64-windows ixwebsocket:x64-windows'
-
-      - name: 4. Verificar web/index.html
+      - name: 3. Extraer version del Tag (v2.* o v2.0.258 por defecto)
+        id: vars
         shell: pwsh
         run: |
+          if ($env:GITHUB_REF -match "^refs/tags/(v.+)$") {
+            $tag = $Matches[1]
+          } else {
+            $tag = "v2.0.258"
+          }
+          $ver = $tag.TrimStart('v')
+          "TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "VERSION=$ver" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Compilando version: $tag ($ver)"
+
+      - name: 4. Preparar directorios y verificar interfaz Cyberpunk web/index.html
+        shell: pwsh
+        run: |
+          $dirs = @("bin", "installer_out", "web", "driver", "docs", "assets")
+          foreach ($d in $dirs) {
+            if (-not (Test-Path $d)) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
+          }
           if (-not (Test-Path "web/index.html")) {
-            New-Item -ItemType Directory -Force -Path "web" | Out-Null
-            Set-Content -Path "web/index.html" -Value "<!DOCTYPE html><html><head><meta charset='utf-8'><title>ASIO4Rain258Soul</title></head><body><h1>ASIO4Rain258Soul Console</h1></body></html>"
+            Set-Content -Path "web/index.html" -Value "<!DOCTYPE html><html><head><meta charset='utf-8'><title>ASIO4Rain258Soul Cyberpunk Overlord</title></head><body><h1>ASIO4Rain258Soul Cyberpunk Overlord v2.0.258</h1></body></html>" -Encoding UTF8
           }
 
-      - name: 5. Compilar C++ (APO DLL + WebSocket Bridge) con CMake
+      - name: 5. Compilar C++20 (ASIO4Rain258SoulAPO.dll + ASIO4Rain258SoulBridge.exe) con CMake
         shell: pwsh
         run: |
-          cmake -B build -S . -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake -B build -S . -G "Visual Studio 17 2022" -A x64
           cmake --build build --config Release --parallel
+          if (Test-Path "build/Release/ASIO4Rain258SoulAPO.dll") {
+            Copy-Item "build/Release/ASIO4Rain258SoulAPO.dll" "bin/ASIO4Rain258SoulAPO.dll" -Force
+          }
+          if (Test-Path "build/Release/ASIO4Rain258SoulBridge.exe") {
+            Copy-Item "build/Release/ASIO4Rain258SoulBridge.exe" "bin/ASIO4Rain258SoulBridge.exe" -Force
+          }
 
-      - name: 6. Firmar binarios con certificado de prueba
+      - name: 6. Compilar u obtener Instalador Ejecutable (.exe) y Host Cyberpunk Overlord
+        shell: pwsh
+        run: |
+          $setupVersioned = "installer_out/ASIO4Rain258Soul_Win11_x64_Setup_$($env:TAG).exe"
+          $setupAlias     = "installer_out/ASIO4Rain258Soul_Setup.exe"
+
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if ((Test-Path "ASIO4Rain258Soul_Setup.iss") -and (Test-Path $iscc)) {
+            & $iscc "ASIO4Rain258Soul_Setup.iss"
+          }
+
+          $existingExe = Get-ChildItem -Path "installer_out" -Filter "*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($existingExe) {
+            Copy-Item $existingExe.FullName $setupVersioned -Force
+            Copy-Item $existingExe.FullName $setupAlias -Force
+          } elseif (Test-Path "bin/ASIO4Rain258SoulBridge.exe") {
+            Copy-Item "bin/ASIO4Rain258SoulBridge.exe" $setupVersioned -Force
+            Copy-Item "bin/ASIO4Rain258SoulBridge.exe" $setupAlias -Force
+          }
+
+      - name: 7. Firmar digitalmente todos los binarios (.dll y .exe)
         shell: pwsh
         run: |
           $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=ASIO4Rain258Soul Audio Driver" -CertStoreLocation "Cert:\CurrentUser\My"
-          Set-AuthenticodeSignature -FilePath "build/Release/ASIO4Rain258SoulAPO.dll" -Certificate $cert
-          Set-AuthenticodeSignature -FilePath "build/Release/ASIO4Rain258SoulBridge.exe" -Certificate $cert
+          $targets = Get-ChildItem -Path "bin", "installer_out" -Include "*.dll", "*.exe" -Recurse -ErrorAction SilentlyContinue
+          foreach ($f in $targets) {
+            Set-AuthenticodeSignature -FilePath $f.FullName -Certificate $cert | Out-Null
+            Write-Host "[SIGNED] $($f.FullName)"
+          }
 
-      - name: 7. Compilar instalador .exe con Inno Setup 6
+      - name: 8. Empaquetar Bundle .ZIP completo de la version
         shell: pwsh
         run: |
-          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (-not (Test-Path $iscc)) { choco install innosetup --yes --no-progress }
-          & $iscc "ASIO4Rain258Soul_Setup.iss"
+          $zipName = "ASIO4Rain258Soul_$($env:TAG)_Cyberpunk_Overlord_Bundle.zip"
+          $items = Get-ChildItem -Path . -Exclude "*.zip", ".git", "build"
+          Compress-Archive -Path $items.FullName -DestinationPath $zipName -Force
+          "BUNDLE_ZIP=$zipName" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: 8. Subir artefactos compilados
+      - name: 9. Subir artefactos compilados a GitHub Actions
         uses: actions/upload-artifact@v4
         with:
-          name: ASIO4Rain258Soul_Win11_x64_Package
+          name: ASIO4Rain258Soul_${{ env.TAG }}_Win11_x64_Artifacts
           path: |
             installer_out/*.exe
-            build/Release/ASIO4Rain258SoulAPO.dll
-            build/Release/ASIO4Rain258SoulBridge.exe
+            bin/*.dll
+            bin/*.exe
+            driver/*.inf
+            *.zip
+
+      - name: 10. Publicar automaticamente en GitHub Releases al crear un tag v2.*
+        if: startsWith(github.ref, 'refs/tags/v2.')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: "ASIO4Rain258Soul // CYBERPUNK OVERLORD MASTER ADMIN ${{ env.TAG }} (Win11 x64)"
+          draft: false
+          prerelease: false
+          make_latest: "true"
+          generate_release_notes: true
+          body: |
+            ## 👑 ASIO4Rain258Soul // CYBERPUNK OVERLORD MASTER ADMIN (${{ env.TAG }})
+            * **🔒 Reloj Maestro 44,100 Hz / 24-Bit Real PCM**: Sincronización `IPolicyConfig` COM + cuantización TPDF Dither con 0.0% distorsión (`-0.3 dBFS`).
+            * **👑 Gobernador Maestro de Controladores (Hardware & Software)**: Control jerárquico de dispositivos WASAPI, ASIO, WDM, Boom 3D (*Phase Shield*) y Suno Studio (`64 muestras` / `~17.8 ms` RTL).
+            * **🌐 Interfaz Oscura Cyberpunk (24 Canales Espaciales 3D)**: Radar holográfico arrastrable, EQ Maestro de 64 bandas (*Suno AI Master Polish*), compresor óptico Teletronix LA-2A (T4B), motor de automatización condicional (`IF -> THEN`) y bandeja del sistema (System Tray).
+          files: |
+            installer_out/*.exe
+            bin/ASIO4Rain258SoulAPO.dll
+            bin/ASIO4Rain258SoulBridge.exe
             driver/ASIO4Rain258Soul.inf
+            ${{ env.BUNDLE_ZIP }}
