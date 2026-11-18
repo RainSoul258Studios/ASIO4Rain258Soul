@@ -1,0 +1,7 @@
+﻿[Version]
+Signature   = "$WINDOWS NT$"
+Class       = AudioProcessingObject
+ClassGuid   = {5989fce8-9cd0-467d-8a6a-5419e31529d4}
+Provider    = "ASIO4Rain258Soul Audio Lab"
+CatalogFile = ASIO4Rain258Soul.cat
+DriverVer   = 11/18/2026,1.0.0.258
