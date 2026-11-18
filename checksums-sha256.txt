@@ -1,10 +1,4 @@
-# =========================================================================================
-# ASIO4Rain258Soul (asio258) v1.0.258 - Official SHA-256 Checksums Manifest
-# Repository : https://github.com/RainSoul258Studios/ASIO4Rain258Soul
-# Release Tag: v1.0.258
-# APO CLSID  : {8F258A10-4D3E-4B9A-9C12-FA0258003D01}
-# Generated  : 2026-11-18T13:12:24Z
-# =========================================================================================
+# SHA-256 Checksums Manifest - ASIO4Rain258Soul v1.0.258
 
 613fc286c12d42a07502d65797345882a4b625dbefd537707ae8b09dac1257b9  ASIO4Rain258Soul_Win11_x64_Setup_v1.0.258.exe
 613fc286c12d42a07502d65797345882a4b625dbefd537707ae8b09dac1257b9  ASIO4Rain258Soul_Setup.exe
