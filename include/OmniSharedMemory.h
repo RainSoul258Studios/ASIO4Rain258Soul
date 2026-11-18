@@ -11,12 +11,12 @@ static constexpr int OMNI_MAX_AUDIO_ENDPOINTS  = 32;
 struct OmniEndpointDSPConfig {
     uint32_t endpointId;
     wchar_t  friendlyName[64];
-    bool     isInput;                  // true = Entrada (Capture), false = Salida (Render)
-    bool     isVirtual;                // false = HARDWARE, true = VIRTUAL
-    bool     asio258MasterEnabled;     // Procesamiento integral asio258 activo
-    uint32_t customBufferSamples;      // 64 a 2048 muestras
-    float    gainLinear;               // 0.0f a 2.0f
-    uint32_t eq64PresetId;             // 0: Suno AI Master Polish (0.749x / 1.412x)
+    bool     isInput;
+    bool     isVirtual;
+    bool     asio258MasterEnabled;
+    uint32_t customBufferSamples;
+    float    gainLinear;
+    uint32_t eq64PresetId;
     bool     enable3DHRTF;
     bool     enablePhaseShield;
     bool     enableLA2ACompressor;
@@ -25,8 +25,8 @@ struct OmniEndpointDSPConfig {
     bool     enableSpectralScanner;
     bool     phaseInvert;
     bool     mute;
-    bool     recordOggActive;          // Grabacion .OGG en curso en este dispositivo E/S
-    uint32_t oggBitrateKbps;           // 256, 320 o 510 kbps (VBR Q10 48 kHz)
+    bool     recordOggActive;
+    uint32_t oggBitrateKbps;
     float    azimuthDeg;
     float    distanceMeters;
 };
@@ -39,8 +39,8 @@ struct OmniIPCControlBlock {
     bool     boom3DZeroLatencyBypass;
     bool     phaseShieldEnabled;
     bool     systemTrayActive;
-    bool     masterOutDOggRecActive;   // Grabadora Maestra .OGG en Bus OUT D
-    uint32_t masterOggBitrateKbps;     // Por defecto 320 kbps VBR Q10
+    bool     masterOutDOggRecActive;
+    uint32_t masterOggBitrateKbps;
 
     uint32_t endpointCount;
     OmniEndpointDSPConfig endpoints[OMNI_MAX_AUDIO_ENDPOINTS];
@@ -55,7 +55,7 @@ struct OmniIPCControlBlock {
         bool  mute;
         bool  solo;
         bool  hrtfEnabled;
-        bool  routeBus[4];             // OUT A (ASIO), OUT B (HRTF), OUT C (OBS), OUT D (DAW .OGG)
+        bool  routeBus[4];
     } channels[OMNI_MAX_SPATIAL_CHANNELS];
 
     float eq64GainsLinear[64];
