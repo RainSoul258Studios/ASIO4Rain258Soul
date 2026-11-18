@@ -1,4 +1,6 @@
-# SHA-256 Checksums Manifest - ASIO4Rain258Soul v1.0.258
+# ==============================================================================
+#  ASIO4Rain258Soul // SHA-256 INTEGRITY MANIFEST (v1.0.258)
+# ==============================================================================
 
 613fc286c12d42a07502d65797345882a4b625dbefd537707ae8b09dac1257b9  ASIO4Rain258Soul_Win11_x64_Setup_v1.0.258.exe
 613fc286c12d42a07502d65797345882a4b625dbefd537707ae8b09dac1257b9  ASIO4Rain258Soul_Setup.exe
